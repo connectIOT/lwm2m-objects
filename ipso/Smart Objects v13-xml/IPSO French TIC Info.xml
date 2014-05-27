@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><LWM2M><Object ObjectType="MODefinition"><Name>IPSO French TIC Info</Name><Description1><![CDATA[This IPSO object is dedicated to the specific “TIC – Trame Teleinformation Client” output embedded on French electrical meters. This output provides various power usage information through a serial frame that can be decoded by some commercial modules, to make these information remotely available. This Object enables to query such a module, and ask for the type of meter in use.	]]></Description1><ObjectID>3309</ObjectID><ObjectURN>urn:oma:lwm2m:ext:3309</ObjectURN><MultipleInstances>Multiple</MultipleInstances><Mandatory>Optional</Mandatory><Resources><Item ID="0"><Name>Last TIC Sample</Name><Operations>R</Operations><MultipleInstances>Single</MultipleInstances><Mandatory>Mandatory</Mandatory><Type>String</Type><RangeEnumeration></RangeEnumeration><Units></Units><Description><![CDATA[Last TIC information sample form the meter]]></Description></Item><Item ID="1"><Name>TIC Meter Type</Name><Operations>R</Operations><MultipleInstances>Single</MultipleInstances><Mandatory>Mandatory</Mandatory><Type>String</Type><RangeEnumeration></RangeEnumeration><Units></Units><Description><![CDATA[The type of remote meter as defined by: 
+0: Unknown
+1: “Concentrateur teleport”
+2:”Compt. Bleu Electr. Monophasé”
+3: ”Compt. Bleu Electr. Monophasé ICC”
+4: ”Compt. Bleu Electr. Triphasé”
+5: ”Compt. Jaune Electronique”
+6: ”Compt. Interface Clientelle Emeraude”
+]]></Description></Item></Resources><Description2><![CDATA[]]></Description2></Object></LWM2M>
