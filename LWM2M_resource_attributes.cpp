@@ -23,38 +23,71 @@ supports setting max-age for cache control
 
 Functional implementation and interpretation is described in the comments below
  
-Library specific code for handling sensor I/O, CoAP resources, notifications and receiving Write Attributes is removed for clarity
+Library specific code for handling sensor I/O, CoAP resources, notifications 
+and receiving Write Attributes is removed for clarity
 
 */
 
 
-/* LWM2M Observe attributes for float and int data, for string and bool only implement pmin and pmax
-This implements the LWM2M 1.0 Notification attributes based on the following interpretation:
-
-1. lt and gt define three signal bands or states, for example low alarm, normal, and high alarm it is desired to transmit a notification whenever the measured variable is in a different band from the last reported band, that is from nornal to high alarm, and from high alarm to normal, and all other possible state transitions, e.g. high to low, etc. subject to pmin (see below)
-
-2. step defines a minimum change needed in the measured variable relative to the last reported value to trigger a new report of the value. For example, if the last reported value was 51.0, and the step variable was set at 1.0, the signal would need to be greater than or equal to 52.0, or less than or equal to 50.0 to trigger a new report (notification). Each time the measured variable is reported, the upper and lower values required to trigger a new report are updated relative to the reported value.
-
-3. pmin defines the minumum desired reporting interval. pmin is assumed to define a mandatory quiet period between notifications. a notification here is assumed to contain at least a single value. Therefore if a combination of potentially reportable events are triggered by lt, gt, and step during the quiet period, the value at the end of the quiet period MUST be reported (sent in a notification). Additional values captured during the quiet period MAY be sent along with the current value in a notification object.
-
-4. pmax defines the largest time interval allowed without a notification. Each time a notification is sent, a timer is reset, set to expire at pmax seconds after the notification was sent. If the pmax timer expires, a notification is sent.
+/*
  
-5. Each time a notification is sent, pmin and pmax timers are are restarted.
+LWM2M Observe attributes for float and int data, for string and bool only
+implement pmin and pmax. 
+ 
+This implements the LWM2M 1.0 Notification attributes based on the following 
+interpretation:
+
+1. lt and gt define three signal bands or states, for example low alarm, normal, 
+and high alarm it is desired to transmit a notification whenever the measured 
+variable is in a different band from the last reported band, that is from nornal 
+to high alarm, and from high alarm to normal, and all other possible state
+transitions, e.g. high to low, etc. subject to pmin (see below)
+
+2. step defines a minimum change needed in the measured variable relative to 
+the last reported value to trigger a new report of the value. For example, if 
+the last reported value was 51.0, and the step variable was set at 1.0, the 
+signal would need to be greater than or equal to 52.0, or less than or equal 
+to 50.0 to trigger a new report (notification). Each time the measured variable 
+is reported, the upper and lower values required to trigger a new report are 
+updated relative to the reported value.
+
+3. pmin defines the minumum desired reporting interval. pmin is assumed to 
+define a mandatory quiet period between notifications. a notification here is 
+assumed to contain at least a single value. Therefore if a combination of 
+potentially reportable events are triggered by lt, gt, and step during the 
+quiet period, the value at the end of the quiet period MUST be reported 
+(sent in a notification). Additional values captured during the quiet period 
+MAY be sent along with the current value in a notification object.
+
+4. pmax defines the largest time interval allowed without a notification. Each 
+time a notification is sent, a timer is reset, set to expire at pmax seconds 
+after the notification was sent. If the pmax timer expires, a notification is sent.
+ 
+Note: each time a notification is sent, pmin and pmax timers are are restarted.
  
 Implementation Notes:
 
-The algorithm for lt and gt is generalized to accept from one to n limit values, each defining a boundary between n+1 signal bands (states). A transition from any state to any other state will create a reportable event.
+The algorithm for lt and gt is generalized to accept from one to n limit values, 
+each defining a boundary between n+1 signal bands (states). A transition from any 
+state to any other state will create a reportable event.
 
-The simple implementation below does not capture information about state changes that occur during the quiet period, only that some state transition has occurred, with a reporting of the current value at the end of the quiet period. Implementations MAY capture state transitions which occur during the quiet period and report them at the end of the quiet period along with the current value in a notification object (senml+json or lwm2m format tlv)
+The simple implementation below does not capture information about state changes 
+that occur during the quiet period, only that some state transition has occurred, 
+with a reporting of the current value at the end of the quiet period. 
+Implementations MAY capture state transitions which occur during the quiet period 
+and report them at the end of the quiet period along with the current value in a 
+notification object (senml+json or lwm2m format tlv)
  
- Note that if a reportable event occurs during the pmin "quiet period" and then the sample returns to a non-reportable state, the sample will still be reported. This can be used to identify signal excursions within the quiet period that aren't reported otherwise. Implementations MAY queue reportable events to be scheduled as a bulk object notification
+I.e., implementations MAY queue reportable events to be scheduled as a sequence 
+object in the next notification.
 */
 
 
 // data type float - int could be used but just convert/cast
 typedef float sample; 
 
-//algorithm can accept any number of limit values and report when signal changes between limit bands
+//algorithm can accept any number of limit values and report when signal changes
+//between limit bands
 #define MAX_LIMITS 2
 static int num_limits = 2;
 static sample limits[MAX_LIMITS];
@@ -107,7 +140,9 @@ void LWM2M_stop_notification()
 }
 
 /*
- examine one query option to see if the tag matches one of the observe attributes if so, set the corresponding attribute pmin, pmax, lt, gt, step and flag pending update
+ examine one query option to see if the tag matches one of the observe 
+ attributes if so, set the corresponding attribute pmin, pmax, lt, gt, 
+ step and flag pending update
  */
 void set_notification_attribute(char* option)
 {
@@ -149,7 +184,9 @@ void set_notification_attribute(char* option)
 }
 
 /* 
-Determine which band [0..num_limits] the provided sample is in. Works with any number of bands 2 to MAX_LIMITS+1 using an array of limit settings
+ Determine which band [0..num_limits] the provided sample is in.
+ Works with any number of bands 2 to MAX_LIMITS+1 using an array 
+ of limit settings
 */
 int band(sample s)
 {
@@ -167,7 +204,8 @@ int band(sample s)
 }
 
 /*
-trigger the build and sending of coap observe response sends current value
+ trigger the build and sending of coap observe response sends
+ current value
 */
 bool send_notification(sample s) 
 {
@@ -223,7 +261,8 @@ void on_pmax()
 }
 
 /*
-for reporting a sample that satisfies the reporting criteria and resetting the state machine
+ for reporting a sample that satisfies the reporting criteria and 
+ resetting the state machine
 */
 int report_sample(sample s)
 {
@@ -242,10 +281,15 @@ int report_sample(sample s)
 }
 
 /*
-schedule_report
-this will send the report immediately if pmin is exceeded or else schedule it for later, when the pmin timer expires.
+ schedule_report
+ this will send the report immediately if pmin is exceeded or else schedule it for
+ later, when the pmin timer expires.
 
-Note that if a reportable event occurs during the pmin "quiet period" and then the sample returns to a non-reportable state, the sample will still be reported. This can be used to identify signal excursions within the quiet period that aren't reported otherwise. Implementations MAY queue reportable events to be scheduled as a bulk object notification
+ Note that if a reportable event occurs during the pmin "quiet period" and then
+ the sample returns to a non-reportable state, the sample will still be reported. T
+ his can be used to identify signal excursions within the quiet period that aren't 
+ reported otherwise. Implementations MAY queue reportable events to be scheduled 
+ as a bulk object notification
 */
 void schedule_report(sample s)
 {
