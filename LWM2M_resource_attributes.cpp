@@ -19,8 +19,6 @@ limitations under the License.
 Supports a specific interpretation of the LWM2M Write Attributes
 pmin, pmax, gt, lt, and step
 
-supports setting max-age for cache control
-
 Functional implementation and interpretation is described in the comments below
  
 Library specific code for handling sensor I/O, CoAP resources, notifications 
@@ -38,7 +36,7 @@ This implements the LWM2M 1.0 Notification attributes based on the following
 interpretation:
 
 1. lt and gt define three signal bands or states, for example low alarm, normal, 
-and high alarm it is desired to transmit a notification whenever the measured 
+and high alarm. It is desired to transmit a notification whenever the measured
 variable is in a different band from the last reported band, that is from nornal 
 to high alarm, and from high alarm to normal, and all other possible state
 transitions, e.g. high to low, etc. subject to pmin (see below)
